@@ -94,7 +94,10 @@ if __name__ == '__main__':
     tf.config.experimental.set_memory_growth(device=physical_devices[0], enable=True)
 
     # load data
-    (train_images, train_labels, test_images, test_labels) = load_CIFAR('/home/user/Documents/dataset/Cifar-10')
+    # (train_images, train_labels, test_images, test_labels) = load_CIFAR('/home/user/Documents/dataset/Cifar-10')
+    (train_images, train_labels), (test_images, test_labels) = tf.keras.datasets.cifar10.load_data()
+    train_labels = tf.keras.utils.to_categorical(train_labels, 10)
+    test_labels = tf.keras.utils.to_categorical(test_labels, 10)
 
     # get model
     model = VGG16()
