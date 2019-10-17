@@ -156,9 +156,9 @@ def train(model, optimizer, images, labels):
     # random shuffle
     seed = np.random.randint(0, 65536)
     np.random.seed(seed)
-    np.random.shuffle(train_images)
+    np.random.shuffle(images)
     np.random.seed(seed)
-    np.random.shuffle(train_labels)
+    np.random.shuffle(labels)
 
     for i in tqdm(range(iterations_per_epoch)):
         x = images[i * batch_size: (i + 1) * batch_size, :, :, :]
@@ -169,8 +169,8 @@ def train(model, optimizer, images, labels):
         sum_loss += loss
         sum_accuracy += accuracy(y, prediction)
 
-    print('epoch:%d, ce_loss:%f, l2_loss:%f, accuracy:%f' %
-          (epoch, sum_loss / iterations_per_epoch, l2_loss(model), sum_accuracy / iterations_per_epoch))
+    print('ce_loss:%f, l2_loss:%f, accuracy:%f' %
+          (sum_loss / iterations_per_epoch, l2_loss(model), sum_accuracy / iterations_per_epoch))
 
 def test(model, images, labels):
     sum_loss = 0
@@ -210,6 +210,7 @@ if __name__ == '__main__':
     optimizer = optimizers.SGD(learning_rate=learning_rate_schedules, momentum=0.9, nesterov=True)
 
     for epoch in range(epoch_num):
+        print('epoch %d' % epoch)
         train(model, optimizer, train_images, train_labels)
         test(model, test_images, test_labels)
 
