@@ -80,13 +80,14 @@ def images_augment(images):
 
 
 def residual_block(inputs, channels, strides=(1, 1)):
+    net = BatchNormalization(momentum=0.9, epsilon=1e-5)(inputs)
+    net = Activation('relu')(net)
+
     if strides == (1, 1):
         shortcut = inputs
     else:
-        shortcut = Conv2D(channels, (1, 1), strides=strides)(inputs)
+        shortcut = Conv2D(channels, (1, 1), strides=strides)(net)
 
-    net = BatchNormalization(momentum=0.9, epsilon=1e-5)(inputs)
-    net = Activation('relu')(net)
     net = Conv2D(channels, (3, 3), padding='same', strides=strides)(net)
     net = BatchNormalization(momentum=0.9, epsilon=1e-5)(net)
     net = Activation('relu')(net)
@@ -117,13 +118,13 @@ def ResNet(inputs):
     return net
 
 def cross_entropy(y_true, y_pred):
-    cross_entropy = -tf.reduce_sum(y_true * tf.math.log(tf.clip_by_value(y_pred, 1e-7, 1.0 - 1e-7)), axis=-1)
+    cross_entropy = tf.keras.losses.categorical_crossentropy(y_true, y_pred)
     return tf.reduce_mean(cross_entropy)
 
 def l2_loss(model, weights=weight_decay):
     variable_list = []
     for v in model.trainable_variables:
-        if 'kernel' or 'bias' in v.name:
+        if 'kernel' in v.name:
             variable_list.append(tf.nn.l2_loss(v))
     return tf.add_n(variable_list) * weights
 
