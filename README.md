@@ -8,4 +8,4 @@ or
 
 [https://www.zhihu.com/people/li-jia-kun-41/posts](https://www.zhihu.com/people/li-jia-kun-41/posts)
 
-The English toturial will be released here as soon as possible
+Please let me know if you need English tutorial.
