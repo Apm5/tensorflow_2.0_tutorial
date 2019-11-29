@@ -5,6 +5,12 @@ def add_noise(x, y):
     x += np.random.uniform(0.0, 0.01)
     return x, y
 
+def one_hot(x, y):
+    if y == 0:
+        return x, np.array([1, 0])
+    else:
+        return x, np.array([0, 1])
+
 if __name__ == '__main__':
     data = np.array([0.1, 0.4, 0.6, 0.2, 0.8, 0.8, 0.4, 0.9, 0.3, 0.2])
     print(data)
@@ -38,7 +44,14 @@ if __name__ == '__main__':
         x, y = it.next()
         print(x, y)
 
-    print('map function')
+    print('one hot')
+    dataset_one_hot = dataset.map(one_hot)
+    it = dataset_one_hot.__iter__()
+    for i in range(10):
+        x, y = it.next()
+        print(x, y)
+
+    print('add noise')
     dataset_add_noise = dataset.map(add_noise)
     it = dataset_add_noise.__iter__()
     for i in range(10):
