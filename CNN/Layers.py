@@ -40,7 +40,7 @@ class ResBlock(tf.keras.layers.Layer):
         net = self.bn_0(inputs, training=training)
         net = tf.nn.relu(net)
 
-        if self.strides != (1, 1):
+        if self.strides != (1, 1, 1, 1):
             shortcut = self.shortcut(net)
         else:
             shortcut = inputs
