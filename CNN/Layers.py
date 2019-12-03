@@ -28,12 +28,9 @@ class Conv2D(tf.keras.layers.Layer):
 class ResBlock(tf.keras.layers.Layer):
     def __init__(self, output_dim, strides=(1, 1, 1, 1), **kwargs):
         self.strides = strides
-        if strides == (1, 1, 1, 1):
-            self.conv_0 = Conv2D(output_dim)
-            self.shortcut = lambda x: x
-        else:
-            self.conv_0 = Conv2D(output_dim, strides=self.strides)
+        if strides != (1, 1, 1, 1):
             self.shortcut = Conv2D(output_dim, kernel_size=(1, 1), strides=self.strides)
+        self.conv_0 = Conv2D(output_dim, strides=self.strides)
         self.conv_1 = Conv2D(output_dim)
         self.bn_0 = BatchNormalization(momentum=0.9, epsilon=1e-5)
         self.bn_1 = BatchNormalization(momentum=0.9, epsilon=1e-5)
@@ -42,11 +39,16 @@ class ResBlock(tf.keras.layers.Layer):
     def call(self, inputs, training):
         net = self.bn_0(inputs, training=training)
         net = tf.nn.relu(net)
+
+        if self.strides != (1, 1):
+            shortcut = self.shortcut(net)
+        else:
+            shortcut = inputs
+
         net = self.conv_0(net)
         net = self.bn_1(net, training=training)
         net = tf.nn.relu(net)
         net = self.conv_1(net)
 
-        shortcut = self.shortcut(inputs)
         output = net + shortcut
         return output

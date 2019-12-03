@@ -87,7 +87,6 @@ def residual_block(inputs, channels, strides=(1, 1)):
         shortcut = inputs
     else:
         shortcut = Conv2D(channels, (1, 1), strides=strides)(net)
-        shortcut = BatchNormalization(momentum=0.9, epsilon=1e-5)(shortcut)
 
     net = Conv2D(channels, (3, 3), padding='same', strides=strides)(net)
     net = BatchNormalization(momentum=0.9, epsilon=1e-5)(net)
