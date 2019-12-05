@@ -21,9 +21,9 @@ def get_embedding_weight(weight_path, word_index):
         for line in f:
             values = line.split()
             word = values[0]
-            if word in word_index.keys() and word_index[word] < word_num:
+            if word in word_index.keys() and word_index[word] + 3 < word_num:
                 weight = np.asarray(values[1:], dtype='float32')
-                embedding_weight[word_index[word]] = weight
+                embedding_weight[word_index[word] + 3] = weight
                 cnt += 1
     print('matched word num: {}'.format(cnt))
     return embedding_weight
