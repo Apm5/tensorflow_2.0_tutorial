@@ -7,7 +7,7 @@ import cv2
 import time
 from tensorflow.keras import models, optimizers, regularizers
 from tensorflow.keras.layers import Conv2D, AveragePooling2D, BatchNormalization, Flatten, Dense, Input, add, Activation
-os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 # network config
 stack_n = 18  # layers = stack_n * 6 + 2

@@ -2,7 +2,7 @@ import os
 import tensorflow as tf
 from tensorflow.keras import models
 from tensorflow.keras.layers import BatchNormalization, Flatten, Dense, Input, AveragePooling2D, Activation
-os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 class Conv2D(tf.keras.layers.Layer):
     def __init__(self, output_dim, kernel_size=(3, 3), strides=(1, 1, 1, 1), **kwargs):
