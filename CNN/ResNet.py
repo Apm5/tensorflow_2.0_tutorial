@@ -1,5 +1,4 @@
 import tensorflow as tf
-from tensorflow.keras import models
 from tensorflow.keras.layers import Conv2D, GlobalAvgPool2D, BatchNormalization, Dense
 
 # network config
@@ -86,7 +85,7 @@ class BottleneckBlock(tf.keras.layers.Layer):
         return output
 
 
-class ResNet(models.Model):
+class ResNet(tf.keras.models.Model):
     def __init__(self, layer_num, **kwargs):
         super(ResNet, self).__init__(**kwargs)
         if block_type[layer_num] == 'basic block':

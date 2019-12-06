@@ -1,93 +1,74 @@
-import tensorflow as tf
-import numpy as np
-import json
-from tqdm import tqdm
 import os
+import numpy as np
+import tensorflow as tf
+from tqdm import tqdm
 from tensorflow.keras import optimizers
+from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
-from tensorflow.keras.layers import Dense, Embedding
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+from tensorflow.keras.layers import Dense, Conv1D, MaxPooling1D, Embedding, GlobalAveragePooling1D
+os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
-data_path = '/home1/dataset/IMDB/imdb.npz'
-word_index_path = '/home1/dataset/IMDB/imdb_word_index.json'
+train_data_path = '/home/user/Documents/dataset/20_newsgroup/20news-bydate-train'
+test_data_path = '/home/user/Documents/dataset/20_newsgroup/20news-bydate-test'
 GLoVe_path = '/home1/dataset/GLoVe/glove.6B.100d.txt'
-word_num = 10000
-max_len = 256
+
+word_num = 20000
+max_len = 1024
 embedding_dim = 100
 
 # training config
-batch_size = 512
-train_num = 25000
+batch_size = 128
+# train_num = 11314
+train_num = 11270
 iterations_per_epoch = int(train_num / batch_size)
-epoch_num = 10
+epoch_num = 20
 
 # test config
-test_batch_size = 500
-test_num = 25000
+test_batch_size = 128
+# test_num = 7532
+test_num = 7503
 test_iterations = int(test_num / test_batch_size)
 
-class LSTMCell(tf.keras.layers.Layer):
-    def __init__(self, output_dim, activation=tf.nn.tanh, forget_bias=1.0, **kwargs):
-        self.output_dim = output_dim
-        self.activation = activation
-        self.forget_bias = forget_bias
-        super(LSTMCell, self).__init__(**kwargs)
+def load_data(path):
+    texts = []
+    labels = []
 
-    def build(self, input_shape):
-        self.kernel = self.add_weight(name='kernel',
-                                      shape=(input_shape[-1] + self.output_dim, self.output_dim * 4),
-                                      initializer=tf.initializers.glorot_uniform)
-        self.bias = self.add_weight(name='bias',
-                                    shape=(self.output_dim * 4,),
-                                    initializer=tf.initializers.zeros)
-
-    def call(self, inputs, state):
-        c, h = state
-        net = tf.concat([inputs, h], axis=-1)
-        net = tf.matmul(net, self.kernel) + self.bias
-
-        i, j, f, o = tf.split(net, num_or_size_splits=4, axis=-1)
-        new_c = (c * tf.sigmoid(f + self.forget_bias) + tf.sigmoid(i) * self.activation(j))
-        new_h = self.activation(new_c) * tf.sigmoid(o)
-
-        new_state = (new_c, new_h)
-        return new_h, new_state
-
-class LSTM(tf.keras.layers.Layer):
-    def __init__(self, output_dim, **kwargs):
-        self.output_dim = output_dim
-        self.cell = LSTMCell(output_dim)
-        super(LSTM, self).__init__(**kwargs)
-
-    def call(self, inputs):
-        inputs = tf.transpose(inputs, [1, 0, 2])
-        # zero initial state
-        state = (tf.constant(0.0, shape=[inputs.shape[1], self.output_dim]),
-                 tf.constant(0.0, shape=[inputs.shape[1], self.output_dim]))
-
-        output = []
-        inputs = tf.unstack(inputs, axis=0)
-        for i in range(len(inputs)):
-            h, state = self.cell(inputs[i], state)
-            output.append(h)
-        output = tf.stack(output, axis=0)
-        output = tf.transpose(output, [1, 0, 2])
-
-        return output
+    for i, label in enumerate(sorted(os.listdir(path))):
+        for file_name in os.listdir(os.path.join(path, label)):
+            file_path = os.path.join(path, label, file_name)
+            try:
+                with open(file_path, 'r') as f:
+                    texts.append(f.read())
+                    labels.append(i)
+            except:
+                print('can not decode:', file_path)
+    return texts, labels
 
 class Model(tf.keras.models.Model):
-    def __init__(self, word_index, **kwargs):
+    def __init__(self, **kwargs):
         super(Model, self).__init__(**kwargs)
 
         embedding_weight = self.get_embedding_weight(GLoVe_path, word_index)
         self.embedding = Embedding(word_num, embedding_dim, weights=[embedding_weight])
-        self.LSTM = LSTM(128)
-        self.fc = Dense(2, activation='softmax')
+        self.conv1 = Conv1D(128, 5, activation='relu')
+        self.pooling1 = MaxPooling1D(5)
+        self.conv2 = Conv1D(128, 5, activation='relu')
+        self.pooling2 = MaxPooling1D(5)
+        self.conv3 = Conv1D(128, 5, activation='relu')
+        self.global_pooling = GlobalAveragePooling1D()
+        self.fc1 = Dense(128, activation='relu')
+        self.fc2 = Dense(20, activation='softmax')
 
     def call(self, inputs):
         net = self.embedding(inputs)
-        net = self.LSTM(net)
-        net = self.fc(net[:, -1, :])
+        net = self.conv1(net)
+        net = self.pooling1(net)
+        net = self.conv2(net)
+        net = self.pooling2(net)
+        net = self.conv3(net)
+        net = self.global_pooling(net)
+        net = self.fc1(net)
+        net = self.fc2(net)
         return net
 
     def get_embedding_weight(self, weight_path, word_index):
@@ -98,17 +79,9 @@ class Model(tf.keras.models.Model):
             for line in f:
                 values = line.split()
                 word = values[0]
-                if word in word_index.keys() and word_index[word] + 3 < word_num:
-                    """
-                    In tf.keras.dataset.imdb.load_data(), there are 4 special mark.
-                    <pad>: 0
-                    <start>: 1
-                    <unknown>: 2
-                    <unused>: 3
-                    So word_index loaded from offical file, "mdb_word_index.json", need to +3.
-                    """
+                if word in word_index.keys() and word_index[word]< word_num:
                     weight = np.asarray(values[1:], dtype='float32')
-                    embedding_weight[word_index[word] + 3] = weight
+                    embedding_weight[word_index[word]] = weight
                     cnt += 1
         print('matched word num: {}'.format(cnt))
         return embedding_weight
@@ -151,7 +124,7 @@ def train(model, optimizer, sequences, labels):
     for i in tqdm(range(iterations_per_epoch)):
         x = sequences[i * batch_size: (i + 1) * batch_size, :]
         y = labels[i * batch_size: (i + 1) * batch_size]
-        y = tf.keras.utils.to_categorical(y, 2)
+        y = tf.keras.utils.to_categorical(y, 20)
 
         loss, prediction = train_step(model, optimizer, x, y)
         sum_loss += loss
@@ -167,7 +140,7 @@ def test(model, sequences, labels):
     for i in tqdm(range(test_iterations)):
         x = sequences[i * test_batch_size: (i + 1) * test_batch_size, :]
         y = labels[i * test_batch_size: (i + 1) * test_batch_size]
-        y = tf.keras.utils.to_categorical(y, 2)
+        y = tf.keras.utils.to_categorical(y, 20)
 
         loss, prediction = test_step(model, x, y)
         sum_loss += loss
@@ -182,17 +155,27 @@ if __name__ == '__main__':
     physical_devices = tf.config.experimental.list_physical_devices('GPU')
     tf.config.experimental.set_memory_growth(device=physical_devices[0], enable=True)
 
-    # load data
-    imdb = tf.keras.datasets.imdb
-    (train_sequences, train_labels), (test_sequences, test_labels) = imdb.load_data(data_path, num_words=word_num)
-    with open(word_index_path, 'r') as f:
-        word_index = json.load(f)
+    train_texts, train_labels = load_data(train_data_path)
+    test_texts, test_labels = load_data(test_data_path)
+    print('train num: {}, test num: {}'.format(len(train_texts), len(test_texts)))
+
+    tokenizer = Tokenizer(num_words=word_num)
+    tokenizer.fit_on_texts(train_texts)
+
+    print('most common words:\nword rank')
+    word_index = tokenizer.word_index
+    for w, c in word_index.items():
+        if c < 5:
+            print(w, c)
+
+    train_sequences = tokenizer.texts_to_sequences(train_texts)
+    test_sequences = tokenizer.texts_to_sequences(test_texts)
 
     train_sequences = pad_sequences(train_sequences, maxlen=max_len)
     test_sequences = pad_sequences(test_sequences, maxlen=max_len)
 
     # get model
-    model = Model(word_index)
+    model = Model()
     model.build(input_shape=(batch_size, max_len))
 
     # show
@@ -204,4 +187,3 @@ if __name__ == '__main__':
         print('epoch %d' % epoch)
         train(model, optimizer, train_sequences, train_labels)
         test(model, test_sequences, test_labels)
-
