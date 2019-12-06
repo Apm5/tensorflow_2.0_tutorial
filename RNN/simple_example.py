@@ -22,6 +22,14 @@ def get_embedding_weight(weight_path, word_index):
             values = line.split()
             word = values[0]
             if word in word_index.keys() and word_index[word] + 3 < word_num:
+                """
+                In tf.keras.dataset.imdb.load_data(), there are 4 special mark.
+                <pad>: 0
+                <start>: 1
+                <unknown>: 2
+                <unused>: 3
+                So word_index loaded from offical file, "mdb_word_index.json", need to +3.
+                """
                 weight = np.asarray(values[1:], dtype='float32')
                 embedding_weight[word_index[word] + 3] = weight
                 cnt += 1
