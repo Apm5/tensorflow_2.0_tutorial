@@ -83,7 +83,7 @@ class Model(tf.keras.models.Model):
                     weight = np.asarray(values[1:], dtype='float32')
                     embedding_weight[word_index[word]] = weight
                     cnt += 1
-        print('matched word num: {}'.format(cnt))
+        print('word num: {}, matched num: {}'.format(len(word_index), cnt))
         return embedding_weight
 
 def cross_entropy(y_true, y_pred):

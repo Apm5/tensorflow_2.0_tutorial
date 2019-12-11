@@ -59,7 +59,8 @@ if __name__ == '__main__':
         print(x, y)
 
     print('add noise')
-    dataset_add_noise = dataset.map(lambda x, y: tf.py_function(add_noise, inp=[x, y], Tout=[tf.float64, tf.int64]))
+    dataset_add_noise = dataset.map(lambda x, y: tf.py_function(add_noise, inp=[x, y], Tout=[tf.float64, tf.int64]),
+                                    num_parallel_calls=tf.data.experimental.AUTOTUNE)
     it = dataset_add_noise.__iter__()
     for i in range(10):
         x, y = it.next()

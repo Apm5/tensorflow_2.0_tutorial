@@ -33,7 +33,7 @@ def get_embedding_weight(weight_path, word_index):
                 weight = np.asarray(values[1:], dtype='float32')
                 embedding_weight[word_index[word] + 3] = weight
                 cnt += 1
-    print('matched word num: {}'.format(cnt))
+    print('word num: {}, matched num: {}'.format(len(word_index), cnt))
     return embedding_weight
 
 def Model():
