@@ -6,6 +6,13 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.layers import Dense, GlobalAveragePooling1D, Embedding
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
+"""
+Download link for imdb dataset and GLoVe weights.
+https://s3.amazonaws.com/text-datasets/imdb.npz
+https://s3.amazonaws.com/text-datasets/imdb_word_index.json
+https://nlp.stanford.edu/projects/glove/
+"""
+
 data_path = '/home1/dataset/IMDB/imdb.npz'
 word_index_path = '/home1/dataset/IMDB/imdb_word_index.json'
 GLoVe_path = '/home1/dataset/GLoVe/glove.6B.100d.txt'
@@ -28,7 +35,7 @@ def get_embedding_weight(weight_path, word_index):
                 <start>: 1
                 <unknown>: 2
                 <unused>: 3
-                So word_index loaded from offical file, "mdb_word_index.json", need to +3.
+                So word_index loaded from offical file, "imdb_word_index.json", need to +3.
                 """
                 weight = np.asarray(values[1:], dtype='float32')
                 embedding_weight[word_index[word] + 3] = weight
