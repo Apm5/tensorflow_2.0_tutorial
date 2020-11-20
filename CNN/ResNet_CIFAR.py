@@ -200,6 +200,8 @@ if __name__ == '__main__':
     train_labels = tf.keras.utils.to_categorical(train_labels, 10)
     test_labels = tf.keras.utils.to_categorical(test_labels, 10)
 
+    train_images = np.array(train_images, dtype=np.float32)
+    test_images = np.array(test_images, dtype=np.float32)
     train_images, test_images = color_normalize(train_images, test_images)
 
     # get model
